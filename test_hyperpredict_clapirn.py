@@ -84,6 +84,7 @@ with torch.no_grad():
             
 
        
-
+#add --nfv_percent 0.05 to argument
+# save value with optimal 
         
 

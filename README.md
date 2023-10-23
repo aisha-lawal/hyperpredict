@@ -35,21 +35,24 @@ If you wish to go ahead with the change, we have provided two scripts `run_clair
 3. Run `run_clairn.py` and `run_niftyreg.py` from the terminal to generate registration results of the image pair for clapirn and niftyreg respectively.
 
 ## Inference
-To test Hyperpredict<sub>clap</sub> run `test_hyperpredict_clapirn.py` with encoding type argument set to mean_encoding
+To test Hyperpredict<sub>clap</sub> run `test_hyperpredict_clapirn.py` with nfv_percent set to desired value, e.g
 ```
-test_hyperpredict_clapirn.py --encoding_type mean_encoding
+test_hyperpredict_clapirn.py --nfv_percent 0.05
 ```
 
-To test Hyperpredict<sub>clap</sub> run `test_hyperpredict_niftyreg.py` with encoding type argument set to mean_encoding
+To test Hyperpredict<sub>nr</sub> run `test_hyperpredict_niftyreg.py` with nfv_percent set to desired value, e.g
 ```
-test_hyperpredict_niftyreg.py --encoding_type mean_encoding
+test_hyperpredict_niftyreg.py --nfv_percent 0.05
 ```
-This will by default test with pretrained models in models/checkpoints/..
+This will by default test with the best pretrained model in models/checkpoints/.. and return optimal instances based on nfv_percent 
+
+To run the test results through the registration, run 
 
 ## Train your own model
-#currently working on documentation, updates coming soon!
-
-Append specific arguments to the command, depending on use-case. The list of arguments are:
+We have provided list of arguments depending on use-case, refer to `setting.py` to review the full list. To train yur own model;
+1. Run `main.py` with desired arguments
+2. The trained model will be saved in models/checkpoints/... 
+3. Follow the inference step above for testing.
 
 ## Acknowledgment
 The pretrained models are obtained from from [cLapIRN](https://github.com/cwmok/Conditional_LapIRN/tree/main) and [Symnet](https://github.com/cwmok/Fast-Symmetric-Diffeomorphic-Image-Registration-with-Convolutional-Neural-Networks/tree/master). We obtain our data from [neurite-oasis](https://github.com/adalca/medical-datasets/blob/master/neurite-oasis.md)
