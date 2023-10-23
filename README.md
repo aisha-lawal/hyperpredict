@@ -46,7 +46,7 @@ test_hyperpredict_niftyreg.py --nfv_percent 0.05
 ```
 This will by default test with the best pretrained model in models/checkpoints/.. and return optimal instances based on nfv_percent 
 
-To run the test results through the registration, run 
+To run the test results through the registration, run `symnet_clapirn.py` or `symnet_niftyreg.py` located in directory run_optimal_results/. Edit the respective files to save the files in a desired directory.
 
 ## Train your own model
 We have provided list of arguments depending on use-case, refer to `setting.py` to review the full list. To train yur own model;
