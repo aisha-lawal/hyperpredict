@@ -496,8 +496,6 @@ def poisson_nllLoss(input, target):
     return loss.mean()
 
 
-
-#move to gpu
 def generate_grid_unit(imgshape):
     x = (np.arange(imgshape[0]) - ((imgshape[0]-1)/2)) / (imgshape[0]-1) * 2
     y = (np.arange(imgshape[1]) - ((imgshape[1]-1)/2)) / (imgshape[1]-1) * 2
@@ -550,7 +548,7 @@ class MaskedAutoEncoder():
             stack_encodings = torch.cat([stack_encodings, encoding], dim = 0)
 
 
-        print("stach enc",stack_encodings.shape)
+        print("stack enc",stack_encodings.shape)
         stack_encodings = stack_encodings[1:]
         print(stack_encodings.shape)
         enc_rep = torch.mean(stack_encodings, dim = 1).unsqueeze(0)
