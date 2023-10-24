@@ -143,7 +143,7 @@ def niftyreg(moving_index, fixed_index, fixed_label, bending_energy, spacing, ta
 
 
 def generating_training_data():
-    datapath = "../data/oasis/training/training_vili"
+    datapath = "../data/oasis/training"
     imgs = sorted(glob.glob(datapath + '/OASIS_OAS1_*_MR1/aligned_norm.nii.gz'))
     labels = sorted(glob.glob(datapath + '/OASIS_OAS1_*_MR1/aligned_seg35.nii.gz'))
 
@@ -155,14 +155,14 @@ def generating_training_data():
     print("length of data is ", len(testing_generator)) 
     columns = ['index','moving_index','fixed_index','dice_per_label', 'dice_mean', 'Jdet_mean', 'Jdet_std','count_folded_voxels','bending_energy', 'spacing']
 
-    file_path = "../data/oasis/niftyreg_training_vili_data.csv"
+    file_path = "../data/oasis/niftyreg_training_data.csv"
     for batch_idx, data in enumerate(testing_generator):
         _, _, _, fixed_label, moving_index, fixed_index = data[0].to(device), data[1].to(device), data[2].to(device), data[3].to(device), data[4], data[5]
         be = torch.tensor(random.sample(bending_energy.tolist(), batch_size), device = device).reshape(batch_size, 1)
         sx = torch.tensor(random.sample(spacing, batch_size), device=device).unsqueeze(0)
         
         print("batch_idx is ", batch_idx,  moving_index, fixed_index, be, sx)
-        dice_per_label, num_folded_voxels, jdet_mean, jdet_std = niftyreg(moving_index, fixed_index, fixed_label, be.item(), sx.item(), "training/training_vili")
+        dice_per_label, num_folded_voxels, jdet_mean, jdet_std = niftyreg(moving_index, fixed_index, fixed_label, be.item(), sx.item(), "training")
 
         save_csv(batch_idx, moving_index, fixed_index, dice_per_label, dice_per_label.mean().item(), jdet_mean.item(), jdet_std.item(), num_folded_voxels.item(), be.item(), sx.item(), columns, file_path)
 
