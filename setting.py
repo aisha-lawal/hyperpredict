@@ -28,14 +28,8 @@ def arg():
     parser.add_argument("--logger_name", type=str, dest="logger_name", 
                 default="", help="name of the logger")
 
-
-    #change hyperparameters to be drawn from a log normal distribution
-    # parser.add_argument('--be', dest = 'be', default = [0.001, 0.007, 0.025, 0.5, 2.0, 5.0], nargs = '*', action = 'append')
-    # parser.add_argument('--sx', dest = 'sx', default = [3.0, 5.0, 10.0], nargs = '*', action = 'append')
-    # parser.add_argument('--lam', dest = 'lam', default = [0.001, 0.025, 0.05, 0.1, 0.125, 0.2, 0.5, 0.75, 1, 4, 8, 10], nargs = '*', action = 'append')
-
     parser.add_argument('--start_channel', type = int, dest = 'start_channel', default = 4, help = "start channel for model")
-
+    parser.add_argument('--nfv_percent', type = float, dest = 'nfv_percent', default = 0.5, help = "percentage of nfv to consider at test time")
     args = parser.parse_args()
 
 

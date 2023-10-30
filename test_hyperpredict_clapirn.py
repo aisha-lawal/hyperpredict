@@ -24,6 +24,7 @@ validation_batch_size = 1
 test_batch_size = 1
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 batch_size = 1
+maximum_nfv = 160 * 192 * 224
 
 encoder = SetParams.set_encoder(encoder_model,  pretrained_path + encoder_path, start_channel, imgshape, imgshape_2, imgshape_4, range_flow)
 registration = SetParams.set_registration(registration_model, start_channel, imgshape, imgshape_2, imgshape_4, range_flow, pretrained_path +registration_path) #needed for testing
@@ -65,26 +66,26 @@ count  = 1
 print("len of test generator", len(test_generator))
 with torch.no_grad():
     for pair_idx, data in enumerate(test_generator):
-        # if pair_idx > 0:
-        #     break
+        if pair_idx > 0:
+            break
         
         pred = []
         tar = []    
         data[0:4] = [d.to(device) for d in data[0:4]]
-        per_image, per_label = model.test_clapirn(pair_idx, data, lam)
+        per_image, per_label = model.test_clapirn(pair_idx, data, lam, args.nfv_percent)
         
         dice_average_per_image_per_lamda = pd.concat([dice_average_per_image_per_lamda, per_image])
 
         dice_average_per_label_per_lamda = pd.concat([dice_average_per_label_per_lamda, per_label])
         
+        # per_image.to_csv("results/symnet_clapirn/mean_encoding_0.25%_data_values_images.csv", mode='a', header=True if count ==1 else False, index=False)
+        # per_label.to_csv("results/symnet_clapirn/mean_encoding_0.25%_data_values_labels.csv", mode='a', header=True if count == 1 else False, index=False)
+        per_image.to_csv("results/symnet_clapirn/testing.csv", mode='a', header=True if count ==1 else False, index=False)
+        per_label.to_csv("results/symnet_clapirn/tester.csv", mode='a', header=True if count == 1 else False, index=False)
+        
         print(count)
         count += 1
-        per_image.to_csv("results/symnet_clapirn/mean_encoding_0.25%_data_values_images.csv", mode='a', header=False, index=False)
-        per_label.to_csv("results/symnet_clapirn/mean_encoding_0.25%_data_values_labels.csv", mode='a', header=False, index=False)
             
 
-       
-#add --nfv_percent 0.05 to argument
-# save value with optimal 
-        
+
 
