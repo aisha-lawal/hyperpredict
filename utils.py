@@ -211,7 +211,7 @@ class DatasetImgsLabelsRegistered(Data.Dataset):
             return loaded_data[0], loaded_data[1], loaded_data[2], loaded_data[3], loaded_data[4], loaded_data[5], loaded_data[6], loaded_data[7]
         
         elif self.registration_model == "niftyreg":
-            return loaded_data[0], loaded_data[1], loaded_data[2], loaded_data[3], loaded_data[4], loaded_data[5], loaded_data[6], loaded_data[7], loaded_data[8]
+            return loaded_data[0], loaded_data[1], loaded_data[2], loaded_data[3], loaded_data[4], loaded_data[5], loaded_data[6], loaded_data[7], loaded_data[8],loaded_data[9]
       
 
     def __len__(self):
@@ -680,11 +680,11 @@ class SetParams(nn.Module):
         validation_path = data_path + registration_model + "_validation_data.csv"
         validation_generator = DataLoader(dataset = DatasetImgsLabelsRegistered(registration_model, encoder_model, validation_path, data = "oasis", task="validation"), batch_size = validation_batch_size, shuffle = False , drop_last = True, num_workers = 16)
 
-        testing_path = data_path + registration_model + "_testing_data.csv"
-        testing_generator = DataLoader(dataset = DatasetImgsLabelsRegistered(registration_model, encoder_model,testing_path, data = "oasis", task ="testing"), batch_size = test_batch_size, shuffle = False , drop_last = True, num_workers = 16)
+        # testing_path = data_path + registration_model + "_testing_data.csv"
+        # testing_generator = DataLoader(dataset = DatasetImgsLabelsRegistered(registration_model, encoder_model,testing_path, data = "oasis", task ="testing"), batch_size = test_batch_size, shuffle = False , drop_last = True, num_workers = 16)
 
 
-        return training_generator, validation_generator, testing_generator
+        return training_generator, validation_generator
 
     def set_oasis_data_niftyreg():
         pass

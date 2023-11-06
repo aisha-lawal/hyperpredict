@@ -20,7 +20,9 @@ class HyperPredictLightningModule(pl.LightningModule):
         self.imgshape = imgshape
         self.enc.eval()
         self.nfv_clapirn = 211473
-        self.nfv_niftyreg = 23189
+        # self.nfv_niftyreg = 23189
+        self.nfv_niftyreg = 194404
+
         self.encoding_type = encoding_type
         self.grid = generate_grid_unit(self.imgshape)
         self.grid = torch.from_numpy(np.reshape(self.grid, (1,) + self.grid.shape)).to(device).float()
@@ -266,7 +268,9 @@ class ComputeLoss(nn.Module):
         if registration_model == "clapirn":
             self.maximum = 211473
         elif registration_model == "niftyreg":
-            self.maximum = 23189
+            # self.maximum = 23189
+            self.maximum = 194404
+        
         print("in compute loss: ", predicted_dice.shape, target_dice.shape, predicted_jac.shape, target_jac.shape)
         target_jac = (target_jac - self.minimum) / (self.maximum - self.minimum)
         dice_loss = nn.functional.mse_loss(predicted_dice, target_dice)
@@ -277,7 +281,7 @@ class ComputeLoss(nn.Module):
 
 
 def hyper_predict(in_features, mapping_features, out_features):
-    #claprin
+    #mainly claprin
     lm_out_one = 64
     lm_out_two = 64
     lm_out_four = 32
@@ -313,7 +317,7 @@ def hyper_predict(in_features, mapping_features, out_features):
 
 # def hyper_predict(in_features, mapping_features, out_features):
 
-#     #niftyreg
+#     #niftyreg ; total_val_loss=0.00691-epoch=17-logger-mean_encoding_2HLnfv_nfv_194404_no_loss_weight.ckpt
 #     lm_out_one = 64
 #     lm_out_two = 64
 #     lm_out_four = 32
@@ -328,13 +332,52 @@ def hyper_predict(in_features, mapping_features, out_features):
 #         nn.Linear(lm_out_one, lm_out_two),
 #         nn.LeakyReLU(),
 #         nn.Linear(lm_out_two, out_features -1),
-#         # nn.Sigmoid(),
 #     )
 
 #     jacobian_mapping = nn.Sequential(
 #         nn.Linear(lm_out_one,lm_out_four),
 #         nn.LeakyReLU(),
 #         nn.Linear(lm_out_four,8),
+#         nn.LeakyReLU(),
+#         nn.Linear(8,1),
+        
+#     )
+
+#     mapping = nn.Sequential(
+#     nn.Linear(1, mapping_features),
+#     nn.LeakyReLU(),
+#     nn.Linear(mapping_features, mapping_features),
+#     )
+
+#     return mapping, linear_mapping, dice_mapping, jacobian_mapping
+
+# def hyper_predict(in_features, mapping_features, out_features):
+
+#     #niftyreg; total_val_loss=0.06348-epoch=12-logger-mean_encoding_3HLnfv_nfv_23189_no_loss_weight_datasize0.25.ckpt
+#     lm_out_one = 64
+#     lm_out_two = 64
+#     lm_out_four = 64
+#     lm_out_five = 32
+
+
+
+#     linear_mapping = nn.Sequential(
+#         nn.Linear(in_features, lm_out_one),
+#         nn.LeakyReLU(),
+#     )
+
+#     dice_mapping = nn.Sequential(
+#         nn.Linear(lm_out_one, lm_out_two),
+#         nn.LeakyReLU(),
+#         nn.Linear(lm_out_two, out_features -1),
+#     )
+
+#     jacobian_mapping = nn.Sequential(
+#         nn.Linear(lm_out_one,lm_out_four),
+#         nn.LeakyReLU(),
+#         nn.Linear(lm_out_four,lm_out_five),
+#         nn.LeakyReLU(),
+#         nn.Linear(lm_out_five, 8),
 #         nn.LeakyReLU(),
 #         nn.Linear(8,1),
         

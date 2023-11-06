@@ -24,7 +24,6 @@ def main():
     training_generator, validation_generator, test_generator = SetParams.set_oasis_data_registered(args.datapath, batch_size, batch_size, batch_size, args.encoder_model, args.registration_model)
 
 
-    # print("in main the encoder is ", encoder)
     print("trainiable prameters in encoder", sum(p.numel() for p in encoder.parameters() if p.requires_grad == True))
     print("Train, validation, testing: ", len(training_generator), len(validation_generator), len(test_generator))
     print("{0} as encoder, {1} as registration, {2} as pretrained encoder".format(args.encoder_model, args.registration_model, encoder_path))
@@ -50,7 +49,6 @@ def main():
     project= "HyperPredict_"+ args.encoder_model + "_" + args.registration_model,
     name = args.run_type + "_" + args.logger_name,
     log_model= all,
-    # save_dir=
     )
 
     if args.encoding_type == "mean_encoding":
@@ -71,7 +69,7 @@ def main():
         trainer = Trainer(fast_dev_run=False,overfit_batches = 7,limit_val_batches=1, max_epochs = 25, log_every_n_steps = 2, devices= 1, logger = logger)
         
     elif args.run_type == "training":
-        trainer = Trainer(fast_dev_run=False, max_epochs= 40, log_every_n_steps=2, devices= 1,callbacks=[model_checkpoint, early_stopping], logger = logger, precision=32, limit_train_batches= args.data_size, limit_val_batches= args.data_size)
+        trainer = Trainer(fast_dev_run=False, max_epochs= 40, log_every_n_steps=2, devices= 1,callbacks=[model_checkpoint, early_stopping], logger = logger, precision=32, limit_train_batches= args.data_size)
     
     trainer.fit(model = pl_model, train_dataloaders = training_generator, val_dataloaders= validation_generator)
 
