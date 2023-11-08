@@ -12,8 +12,6 @@ from setting import arg
 
 
 def main():
-
-
     if args.encoder_model == "clapirn":
         encoder_path = "clapirn.pth"
     
@@ -21,11 +19,11 @@ def main():
         encoder_path = "symnet.pth"
 
     encoder = SetParams.set_encoder(args.encoder_model,  args.pretrained_path + encoder_path, args.start_channel, imgshape, imgshape_2, imgshape_4, range_flow)
-    training_generator, validation_generator, test_generator = SetParams.set_oasis_data_registered(args.datapath, batch_size, batch_size, batch_size, args.encoder_model, args.registration_model)
+    training_generator, validation_generator = SetParams.set_oasis_data_registered(args.datapath, batch_size, batch_size, batch_size, args.encoder_model, args.registration_model)
 
 
     print("trainiable prameters in encoder", sum(p.numel() for p in encoder.parameters() if p.requires_grad == True))
-    print("Train, validation, testing: ", len(training_generator), len(validation_generator), len(test_generator))
+    print("Train, validation, testing: ", len(training_generator), len(validation_generator))
     print("{0} as encoder, {1} as registration, {2} as pretrained encoder".format(args.encoder_model, args.registration_model, encoder_path))
 
 
@@ -52,7 +50,9 @@ def main():
     )
 
     if args.encoding_type == "mean_encoding":
-        select_in_features = {"clapirn_clapirn": 32, "clapirn_niftyreg": 48, "symnet_clapirn": 88, "symnet_niftyreg": 120}
+        # select_in_features = {"clapirn_clapirn": 32, "clapirn_niftyreg": 48, "symnet_clapirn": 88, "symnet_niftyreg": 120}
+        select_in_features = {"clapirn_clapirn": 32, "clapirn_niftyreg": 48, "symnet_clapirn": 88, "symnet_niftyreg": 152}
+
     elif args.encoding_type == "mean_min_max_encoding":
         select_in_features = {"clapirn_clapirn": 64, "clapirn_niftyreg": 80, "symnet_clapirn": 200, "symnet_niftyreg": 232}
     
@@ -69,14 +69,13 @@ def main():
         trainer = Trainer(fast_dev_run=False,overfit_batches = 7,limit_val_batches=1, max_epochs = 25, log_every_n_steps = 2, devices= 1, logger = logger)
         
     elif args.run_type == "training":
-        trainer = Trainer(fast_dev_run=False, max_epochs= 40, log_every_n_steps=2, devices= 1,callbacks=[model_checkpoint, early_stopping], logger = logger, precision=32, limit_train_batches= args.data_size)
+        trainer = Trainer(fast_dev_run=False, max_epochs= 150, log_every_n_steps=2, devices= 1,callbacks=[model_checkpoint, early_stopping], logger = logger, precision=32, limit_train_batches= args.data_size)
     
     trainer.fit(model = pl_model, train_dataloaders = training_generator, val_dataloaders= validation_generator)
 
 
 
 if __name__ == "__main__":
-
 
     imgshape = (160, 192, 224)
     imgshape_4 = (160 / 4, 192 / 4, 224 / 4)

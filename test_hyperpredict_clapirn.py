@@ -46,7 +46,6 @@ model = HyperPredictLightningModule(hyper_predict(in_features, mapping_features,
 # model.load_state_dict(torch.load("models/checkpoints/mean_encoding_main_hyperpredict_network2hidden_layers/symnet_clapirn/total_val_loss=0.00553-epoch=09-logger-mean_encoding_main_hyperpredict_network_2hidden_layers.ckpt")["state_dict"])
 model.load_state_dict(torch.load("models/checkpoints/symnet_clapirn/total_val_loss=0.00549-epoch=14-logger-mean_encoding_main_hyperpredict_network_datasize0.25.ckpt")["state_dict"])
 
-
 # lam = np.linspace(-5, 0, 200)
 # lam = np.exp(lam)
 lam = np.array([0.05, 0.075, 0.1, 0.125, 0.15, 0.2, 0.5, 1.0])
@@ -85,7 +84,6 @@ with torch.no_grad():
         
         print(count)
         count += 1
-            
-
+    
 
 
