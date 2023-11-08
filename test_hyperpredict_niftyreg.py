@@ -49,7 +49,7 @@ model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/total_val_l
 
 be = np.linspace(-5, 0, 10)
 be = np.exp(be)
-le = np.linspace(-5, 0, 10)
+le = np.linspace(-4, 0, 3)
 le = np.exp(le)
 # be = [0.001,0.0075, 0.05, 0.075, 0.1, 0.125, 1]
 sx = 5
@@ -72,6 +72,8 @@ count  = 1
 print("len test generator", len(testing_sub))
 with torch.no_grad():
     for pair_idx, data in enumerate(testing_sub):
+        # if pair_idx > 0:
+        #     break
         pred = []
         tar = []    
         data[0:4] = [d.to(device) for d in data[0:4]]

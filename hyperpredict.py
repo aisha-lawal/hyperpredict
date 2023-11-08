@@ -224,7 +224,7 @@ class HyperPredictLightningModule(pl.LightningModule):
                     sx = torch.tensor(spacing, device=self.device).float().unsqueeze(0).unsqueeze(0)
 
                     mapped_log_be = self.mapping(torch.where(be > 0, be.log(), (be + 1e-6).log()))
-                    mapped_log_le = self.mapping(torch.where(le > 0, be.log(), (le + 1e-6).log()))
+                    mapped_log_le = self.mapping(torch.where(le > 0, le.log(), (le + 1e-6).log()))
                     mapped_log_sx = self.mapping(sx.log())
 
                     if self.encoding_type == "mean_encoding":
@@ -233,7 +233,7 @@ class HyperPredictLightningModule(pl.LightningModule):
                         enc_rep_cat = torch.cat([global_mean, global_max, global_min, mapped_log_sx, mapped_log_be, mapped_log_le], dim= 1)
 
                     linear_map = self.linear_mapping(enc_rep_cat)
-
+                    
                     #dice and jacobian mapping 
                     predicted_dice = self.dice_mapping(linear_map)
                     predicted_jac = self.jacobian_mapping(linear_map)                
