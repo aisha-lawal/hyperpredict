@@ -84,6 +84,16 @@ with torch.no_grad():
         
         print(count)
         count += 1
-    
 
 
+"""
+Things to do
+1. take maximum dice for each label per image pair
+2. remove all labels that are not needed
+
+"""
+#alongside taking the nfv below 0.5%, also select the maxium dice value for each label before sending saving the csv file. Do it here
+dice_average_per_label_per_lamda = pd.read_csv("results/symnet_clapirn/tester.csv")
+
+#group by image pair and label and take the max dice value for each label
+dice_average_per_label_per_lamda = dice_average_per_label_per_lamda.groupby(['pair_idx', 'label']).agg({'predicted_dice': 'max'}).reset_index()

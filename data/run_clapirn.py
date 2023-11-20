@@ -21,7 +21,7 @@ def JacboianDet(y_pred, sample_grid):
     for i in range(y_pred.shape[0]):
 
         J = y_pred[i].unsqueeze(0)+ sample_grid
-
+        #derivatives using finite difference method
         dy = J[:, 1:, :-1, :-1, :] - J[:, :-1, :-1, :-1, :]
         dx = J[:, :-1, 1:, :-1, :] - J[:, :-1, :-1, :-1, :]
         dz = J[:, :-1, :-1, 1:, :] - J[:, :-1, :-1, :-1, :]

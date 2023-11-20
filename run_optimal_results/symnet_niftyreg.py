@@ -14,7 +14,6 @@ plt.rcParams["figure.figsize"] = (12,8)
 maximum_nfv = 160 * 192 * 224
 
 
-#testing alternative_models
 hyperpredict_optimal_registration = pd.read_csv("../results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25_label.csv")
 
 def dice(im1, atlas):
@@ -23,7 +22,7 @@ def dice(im1, atlas):
     unique_class = torch.unique(atlas)
     dice = 0
     num_count = 0
-    labels_dice_score = [] #take the mean of this later if you want for entire image, also save the dice for each label for the 
+    labels_dice_score = []
     for i in unique_class:
         if (i == 0) or ((im1 == i).sum() == 0) or ((atlas == i).sum() == 0):
             continue
@@ -55,21 +54,15 @@ def load_nii(fixed_image, moving_image,warped_image, fxd_lbl, mov_lbl, warped_la
 
 
 def set_niftyreg():
-        #compute bspline
         get_bspline = "reg_f3d -ref {} -flo {} -be {} -le {} -sx {} -cpp bspline.nii -res warped_image.nii"
-
-        #convert the bspline to deformation field
         get_deformation_field = "reg_transform -ref {} -def bspline.nii deformation_field.nii"
-
-        #warp segmentation
         get_warp_seg = "reg_resample -ref {} -flo {} -inter 0 -trans deformation_field.nii -res warped_label.nii"
-
-        #compute jacobian_det
         get_jac_det = "reg_jacobian -ref {} -trans deformation_field.nii -jac jac_det_map.nii" #deformation field?
 
         return get_bspline, get_deformation_field, get_warp_seg, get_jac_det
 
 def pad_with_zeros(string):
+    string = str(string)
     if len(string) < 4:
         num_zeros = 4 - len(string)
         padded_string = '0'* num_zeros + string
@@ -90,7 +83,6 @@ def niftyreg(pair_idx, moving_index, fixed_index, fixed_label, bending_energy, l
     bspline = "bspline.nii" 
     warped_image = "warped_image.nii"
      
-    #do registeration
     get_bspline, get_deformation_field, get_warp_seg, get_jac_det = set_niftyreg()
     os.system(get_bspline.format(fixed_image, moving_image, bending_energy, linear_elasticity, spacing))
     os.system(get_deformation_field.format(fixed_image))
@@ -101,8 +93,6 @@ def niftyreg(pair_idx, moving_index, fixed_index, fixed_label, bending_energy, l
           nib.load("deformation_field.nii").get_fdata().shape, nib.load("bspline.nii").get_fdata().shape)
 
     fixed_image, moving_image, warped_image, fixed_label, moving_label, warped_label, jac_det, deformation_field = load_nii(fixed_image, moving_image,warped_image, fxd_lbl, mov_lbl, warped_label, jac_det, deformation_field, bspline)
-    #dice after registration
-    # print("in niftyreg warped shapes ", warped_label.shape, fixed_label.shape)  #shape is [1, 144, 152, 192]
     print("shape of everything from niftyreg after registration ", fixed_image.shape, moving_image.shape, warped_image.shape, fixed_label.shape, moving_label.shape, warped_label.shape, jac_det.shape,
            deformation_field.shape, fixed_label.min(), fixed_label.max(), moving_label.min(), moving_label.max(), warped_label.min(), warped_label.max())
     folded_voxels = torch.count_nonzero(jac_det.squeeze(0)<0) #neg value computation
@@ -111,22 +101,29 @@ def niftyreg(pair_idx, moving_index, fixed_index, fixed_label, bending_energy, l
     return dice_score, folded_voxels.item()
 
 
-
-lr_accumbens = (16, 32)
-lr_amygdala = (15, 31)
-lr_caudate = (8, 27)
-lr_hippocampus = (14, 30)
-lr_pallidum = (10, 29)
-lr_putamen = (9, 28)
 lr_thalamus = (7, 26)
+lr_hippocampus = (14, 30)
+lr_cerebellum_WM = (5, 24)
+lr_cerebellum_cortex = (6, 25)
+lr_amygdala = (15, 31)
+lr_cerebral_cortex = (2, 21)
+lr_cerebral_WM = (1, 20)
+lr_vessel = (18, 34)
+lr_lateral_ventricle = (3, 22)
+lr_accumbens = (16, 32)
+lr_putamen = (9, 28)
+lr_pallidum = (10, 29)
+lr_caudate = (8, 27)
 
 hyperpredict_optimal_registration["target_dice"] = 0
 hyperpredict_optimal_registration["target_jac"] = 0
 hyperpredict_optimal_registration["target_label"] = "No"
-labels = {"Accumbens": lr_accumbens, "Amygdala": lr_amygdala, "Caudate": lr_caudate, "Hippocampus": lr_hippocampus, "Pallidum": lr_pallidum, "Putamen": lr_putamen, "Thalamus": lr_thalamus}
+labels = {"Thalamus": lr_thalamus, "Hippocampus": lr_hippocampus, "Amygdala": lr_amygdala, "Accumbens": lr_accumbens, "Putamen": lr_putamen, "Pallidum": lr_pallidum, "Caudate": lr_caudate, "Cerebellum WM": lr_cerebellum_WM,
+                   "Cerebellum Cortex": lr_cerebellum_cortex, "Cerebral Cortex": lr_cerebral_cortex, "Cerebral WM": lr_cerebral_WM, "Vessel": lr_vessel, "Lateral Ventricle": lr_lateral_ventricle}
+
 for i in range(len(hyperpredict_optimal_registration)):
-    if i > 2:
-        break
+    # if i > 2:
+    #     break
     moving_index = hyperpredict_optimal_registration.loc[i, 'moving_index']
     fixed_index = hyperpredict_optimal_registration.loc[i, 'fixed_index']
     print("moving and fixed indexes", moving_index, fixed_index)
@@ -137,10 +134,8 @@ for i in range(len(hyperpredict_optimal_registration)):
     label = hyperpredict_optimal_registration.loc[i, 'label']
     fixed_label = load("../data/oasis/testing/OASIS_OAS1_"+pad_with_zeros(fixed_index)+"_MR1/aligned_seg35.nii.gz")
     target_dice, target_jac = niftyreg(i, moving_index, fixed_index, fixed_label, be, le, sx, "testing")
-    target_dice =  torch.stack(target_dice).mean().item()
-    print("dice and jac", target_dice, target_jac)
-    hyperpredict_optimal_registration.loc[i, "target_dice"] = target_dice
-    hyperpredict_optimal_registration.loc[i, "target_jac"] = target_jac
+    # target_dice =  torch.stack(target_dice).mean().item() 
+    # hyperpredict_optimal_registration.loc[i, "target_jac"] = target_jac
     print(i)
     df = pd.DataFrame(columns=["pair_idx", "moving_index", "fixed_index",  "predicted_dice", "be", "le", "sx", "predicted_jac", "target_dice", "target_jac"])
 #     #add row to df
@@ -155,7 +150,6 @@ for i in range(len(hyperpredict_optimal_registration)):
             target_avg = (target_dice[labels[l][0]-1] + target_dice[labels[l][1]-1])/2
 
 
-    #add target_avg to the target_avg column of hyperpredict_df for a specific row
     hyperpredict_optimal_registration.loc[i, "target_dice"] = target_avg.item()
     hyperpredict_optimal_registration.loc[i, "target_jac"] = target_jac
     hyperpredict_optimal_registration.loc[i, "target_label"] = target_label
@@ -165,7 +159,7 @@ for i in range(len(hyperpredict_optimal_registration)):
     #add row to df
     df.loc[i] = hyperpredict_optimal_registration.loc[i]
 
-    df.to_csv("../results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25_target.csv", mode='a', header=False, index=False)
+    df.to_csv("../results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25_label_target.csv", mode='a', header=False, index=False)
 #     print(i)
 # hyperpredict_optimal_registration.to_csv("optimal_hp_0.5%_hyperpredict_niftyreg.csv")
 

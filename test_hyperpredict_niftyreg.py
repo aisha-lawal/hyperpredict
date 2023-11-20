@@ -47,11 +47,12 @@ model = HyperPredictLightningModule(hyper_predict(in_features, mapping_features,
 model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/total_val_loss=0.01015-epoch=43-logger-mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25.ckpt")["state_dict"])
 
 
-be = np.linspace(-5, 0, 10)
+be = np.linspace(-5, 0, 100)
 be = np.exp(be)
-le = np.linspace(-4, 0, 3)
+le = np.linspace(-5, 0, 80)
 le = np.exp(le)
-# be = [0.001,0.0075, 0.05, 0.075, 0.1, 0.125, 1]
+# be = [0.001, 0.05,  0.125]
+# le = [0.0075, 0.5]
 sx = 5
 for params in model.parameters():
     params.requires_grad = False
@@ -90,8 +91,15 @@ with torch.no_grad():
         
         print(count)
         count += 1
-            
 
+#save optimal
+image_data = pd.read_csv("results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25_img.csv")
+image_data = image_data.groupby(["pair_idx"], as_index=False).apply(lambda x: x[x.predicted_dice == x.predicted_dice.max()])
+image_data.to_csv("results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25_img.csv")
+
+label_data = pd.read_csv("results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25_label.csv")
+label_data = label_data.groupby(["pair_idx", "label"], as_index=False).apply(lambda x: x[x.predicted_dice == x.predicted_dice.max()])
+label_data.to_csv("results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25_label.csv")
 
         
 
