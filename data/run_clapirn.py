@@ -6,10 +6,11 @@ import torch
 from datetime import datetime
 import random
 
-from utils import DatasetImgsLabels, SpatialTransform_unit, SpatialTransformNearest_unit, dice3D, generate_grid_unit, save_csv
+from utils import DatasetImgsLabels, SpatialTransform_unit, SpatialTransformNearest_unit, dice3D, generate_grid_unit
 from models.registrations.clapirn import Lvl1, Lvl2, Lvl3
 import glob
 from torch.utils import data as Data
+import pandas as pd
 
 
 
@@ -21,7 +22,7 @@ def JacboianDet(y_pred, sample_grid):
     for i in range(y_pred.shape[0]):
 
         J = y_pred[i].unsqueeze(0)+ sample_grid
-
+        #derivatives using finite difference method
         dy = J[:, 1:, :-1, :-1, :] - J[:, :-1, :-1, :-1, :]
         dx = J[:, :-1, 1:, :-1, :] - J[:, :-1, :-1, :-1, :]
         dz = J[:, :-1, :-1, 1:, :] - J[:, :-1, :-1, :-1, :]
@@ -41,6 +42,13 @@ def JacboianDet(y_pred, sample_grid):
     batch_count_std = batch_count_std[1:]
     return batch_count_num_voxels, batch_count_mean, batch_count_std
 
+def save_csv(idx, moving_index, fixed_index, dice_per_label, dice_mean, Jdet_mean, Jdet_std, count_folded_voxels, hyper_param, columns, file_path):
+    dice_per_label = dice_per_label.tolist()
+    row =[idx, moving_index,fixed_index ,dice_per_label, dice_mean, Jdet_mean, Jdet_std, count_folded_voxels, hyper_param]
+    
+    data = dict(zip(columns, row))
+    df = pd.DataFrame(data = data)
+    df.to_csv(file_path,  mode='a', index=False, header= False)
 
 
 def generating_training_data():
@@ -158,15 +166,29 @@ if __name__ == "__main__":
     imgshape_4 = (160 / 4, 192 / 4, 224 / 4)
     imgshape_2 = (160 / 2, 192 / 2, 224 / 2) 
     mu = 0.0
-    sigma = 0.4
-    lam = torch.distributions.log_normal.LogNormal(mu, sigma)
-    lam = lam.sample((6000,))
-    lam = (lam - lam.min())/ ((lam.max()/1.75) - lam.min())
-    add_sample_zero = torch.zeros(500)
-    add_sample_low_low = torch.tensor([random.uniform(0.0, 0.01) for _ in range(4000)])
-    add_sample_low = torch.tensor([random.uniform(0.0, 0.1) for _ in range(8000)])
-    add_sample_high = torch.tensor([random.uniform(0.2, 1.25) for _ in range(8000)])
-    lam = torch.cat((lam, add_sample_zero, add_sample_low_low, add_sample_low, add_sample_high), dim=0)
+    sigma = 0.7
+    distrubution = torch.distributions.log_normal.LogNormal(mu, sigma)
+    #bending energy
+    zero = torch.zeros(20)
+    low = torch.tensor([random.uniform(0.0, 0.01) for _ in range(300)])
+    mid = torch.tensor([random.uniform(0.0, 0.1) for _ in range(1000)])
+    high = torch.tensor([random.uniform(0.2, 1.25) for _ in range(1000)])
+
+
+    lam = distrubution.sample((2000,))
+    lam = (lam - lam.min())/ ((lam.max())/1.75 - lam.min())
+    lam = torch.cat((zero, lam, low, mid, high), dim=0)
+
+
+
+    # lam = torch.distributions.log_normal.LogNormal(mu, sigma)
+    # lam = lam.sample((6000,))
+    # lam = (lam - lam.min())/ ((lam.max()/1.75) - lam.min())
+    # add_sample_zero = torch.zeros(500)
+    # add_sample_low_low = torch.tensor([random.uniform(0.0, 0.01) for _ in range(4000)])
+    # add_sample_low = torch.tensor([random.uniform(0.0, 0.1) for _ in range(8000)])
+    # add_sample_high = torch.tensor([random.uniform(0.2, 1.25) for _ in range(8000)])
+    # lam = torch.cat((lam, add_sample_zero, add_sample_low_low, add_sample_low, add_sample_high), dim=0)
         
     batch_size = 16
     range_flow = 0.4

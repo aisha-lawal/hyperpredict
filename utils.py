@@ -211,7 +211,7 @@ class DatasetImgsLabelsRegistered(Data.Dataset):
             return loaded_data[0], loaded_data[1], loaded_data[2], loaded_data[3], loaded_data[4], loaded_data[5], loaded_data[6], loaded_data[7]
         
         elif self.registration_model == "niftyreg":
-            return loaded_data[0], loaded_data[1], loaded_data[2], loaded_data[3], loaded_data[4], loaded_data[5], loaded_data[6], loaded_data[7], loaded_data[8],loaded_data[9]
+            return loaded_data[0], loaded_data[1], loaded_data[2], loaded_data[3], loaded_data[4], loaded_data[5], loaded_data[6], loaded_data[7], loaded_data[8], loaded_data[9]
       
 
     def __len__(self):
@@ -237,9 +237,10 @@ def load_data(dataframe, task, registration_model):
         moving_img = imgnorm(load(mov_img_path))
         fixed_img = imgnorm(load(fix_img_path))
         bending_energy = torch.tensor(float(dataframe["bending_energy"]))
+        linear_elasticity = torch.tensor(float(dataframe["linear_elasticity"]))
         spacing = torch.tensor(float(dataframe["spacing"]))
 
-        return torch.from_numpy(moving_img).float(), torch.from_numpy(fixed_img).float(), torch.from_numpy(dice_per_label), dice_mean.unsqueeze(-1),jdet_mean.unsqueeze(-1), jdet_std.unsqueeze(-1), count_folded_voxels.unsqueeze(-1), bending_energy.unsqueeze(-1), spacing.unsqueeze(-1)
+        return torch.from_numpy(moving_img).float(), torch.from_numpy(fixed_img).float(), torch.from_numpy(dice_per_label), dice_mean.unsqueeze(-1),jdet_mean.unsqueeze(-1), jdet_std.unsqueeze(-1), count_folded_voxels.unsqueeze(-1), bending_energy.unsqueeze(-1), linear_elasticity.unsqueeze(-1), spacing.unsqueeze(-1)
     
         
 
