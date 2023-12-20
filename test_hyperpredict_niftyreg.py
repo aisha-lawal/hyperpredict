@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from setting import arg
-
+from datetime import datetime
 
 registration_model = "niftyreg"
 encoder_model = "symnet"
@@ -22,7 +22,7 @@ imgshape_2 = (160 / 2, 192 / 2, 224 / 2)
 train_batch_size =1
 validation_batch_size = 1
 test_batch_size = 1
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:6" if torch.cuda.is_available() else "cpu")
 batch_size = 1
 maximum_nfv = 160 * 192 * 224
 args = arg()
@@ -44,15 +44,27 @@ out_features = 36
 mapping_features = 16 if encoder_model == "clapirn" else 32
 model = HyperPredictLightningModule(hyper_predict(in_features, mapping_features, out_features),  registration_model, encoder_model, imgshape, encoder, batch_size, args.encoding_type)
 # model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/total_val_loss=0.00691-epoch=17-logger-mean_encoding_2HLnfv_nfv_194404_no_loss_weight.ckpt")["state_dict"])
-model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/total_val_loss=0.01015-epoch=43-logger-mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25.ckpt")["state_dict"])
+model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/total_val_loss=0.01249-epoch=26-logger-training_mean_encoding_main_hyperpredict_network_datasize0.25_le_be_shufld_dataset_weight_2.0.ckpt")["state_dict"])
+# model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/datasize/total_val_loss=0.00715-epoch=15-logger-training_mean_encoding_main_hyperpredict_network_datasize1.0_original_data_bayes_lossweight_1.0.ckpt")["state_dict"])
 
 
-be = np.linspace(-6, 0, 100)
-be = np.exp(be)
-le = np.linspace(-6, 0, 80)
-le = np.exp(le)
-# be = [0.001, 0.05,  0.125]
-# le = [0.0075, 0.5]
+# be = np.linspace(-11, 0, 100)
+# be = np.exp(be)
+# le = np.linspace(-11, 0, 100)
+# le = np.exp(le)
+# be = [0.0200, 0.0164, 0.0194, 0.0067, 0.0215]
+# le = [0.0085, 0.0067, 0.0080, 0.0091, 0.0102, 0.0076]
+
+# be = [0.05, 0.075, 0.1, 0.125, 0.15, 0.2, 0.5, 1.0]
+# be = [0.0001, 0.006, 0.02, 0.01, 0.05, 0.075, 0.2, 0.5]
+
+#important
+# be = [0.0001, 0.006, 0.02, 0.01, 0.2]
+# le = [0.008, 0.006, 0.05, 0.01, 0.1, 0.5]
+
+be = [0.0001, 0.006, 0.01, 0.2]
+le = [0.008, 0.006,  0.01, 0.1, 0.5]
+
 sx = 5
 for params in model.parameters():
     params.requires_grad = False
@@ -71,6 +83,7 @@ columns_label = ["pair_idx","moving_index", "fixed_index", "predicted_dice","be"
 dice_average_per_label_per_be = pd.DataFrame(columns = columns_label)
 count  = 1
 print("len test generator", len(testing_sub))
+start = datetime.now()
 with torch.no_grad():
     for pair_idx, data in enumerate(testing_sub):
         # if pair_idx > 0:
@@ -78,16 +91,15 @@ with torch.no_grad():
         pred = []
         tar = []    
         data[0:4] = [d.to(device) for d in data[0:4]]
-        per_image, per_label = model.test_niftyreg(pair_idx, data, be,le, sx, args.nfv_percent)
+        # per_image, per_label = model.test_niftyreg(pair_idx, data, be,le, sx, args.nfv_percent)
+        per_image, per_label = model.test_niftyreg(pair_idx, data, be, le, sx, args.nfv_percent)
   
         
-        # per_image.to_csv("results/symnet_niftyreg/mean_encoding_200_single_encoder_run_be_symnet_niftyreg_dice_average_per_image_per_be.csv", mode='a', header=False, index=False)
-        # per_label.to_csv("results/symnet_niftyreg/mean_encoding_200_single_encoder_run_be_symnet_niftyreg_dice_average_per_label_per_be.csv", mode='a', header=False, index=False)
-
         # per_image.to_csv("results/symnet_niftyreg/mean_encoding_2HLnfv_nfv_194404_no_loss_weight_image.csv", mode='a', header=False, index=False)
         # per_label.to_csv("results/symnet_niftyreg/mean_encoding_2HLnfv_nfv_194404_no_loss_weight_label.csv", mode='a', header=False, index=False)
-        per_image.to_csv("results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx-6_0_datasize0.25_img.csv", mode='a', header=True if count == 1 else False, index=False)
-        per_label.to_csv("results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx-6_0_datasize0.25_label.csv", mode='a', header=True if count == 1 else False, index=False)
+        per_image.to_csv("results/symnet_niftyreg/sensitivity_analysis/sensitivity_analysis_image_2.0_image.csv", mode='a', header=True if count == 1 else False, index=False)
+        per_label.to_csv("results/symnet_niftyreg/sensitivity_analysis/sensitivity_analysis_image_2.0_label.csv", mode='a', header=True if count == 1 else False, index=False)
+        
         
         print(count)
         count += 1
@@ -100,6 +112,6 @@ with torch.no_grad():
 # label_data = pd.read_csv("results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25_label.csv")
 # label_data = label_data.groupby(["pair_idx", "label"], as_index=False).apply(lambda x: x[x.predicted_dice == x.predicted_dice.max()])
 # label_data.to_csv("results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25_label.csv")
-
+print("time taken", datetime.now() - start)
         
 

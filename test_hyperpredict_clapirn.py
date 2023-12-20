@@ -44,7 +44,9 @@ mapping_features = 16 if encoder_model == "clapirn" else 32
 model = HyperPredictLightningModule(hyper_predict(in_features, mapping_features, out_features),  registration_model, encoder_model, imgshape, encoder, batch_size,args.encoding_type)
 # model.load_state_dict(torch.load("models/checkpoints/mean_encoding_main_hyperpredict_network/symnet_clapirn/total_val_loss=0.00535-epoch=18-logger-mean_encoding_main_hyperpredict_network.ckpt")["state_dict"])
 # model.load_state_dict(torch.load("models/checkpoints/mean_encoding_main_hyperpredict_network2hidden_layers/symnet_clapirn/total_val_loss=0.00553-epoch=09-logger-mean_encoding_main_hyperpredict_network_2hidden_layers.ckpt")["state_dict"])
-model.load_state_dict(torch.load("models/checkpoints/symnet_clapirn/total_val_loss=0.00549-epoch=14-logger-mean_encoding_main_hyperpredict_network_datasize0.25.ckpt")["state_dict"])
+# model.load_state_dict(torch.load("models/checkpoints/symnet_clapirn/total_val_loss=0.00549-epoch=14-logger-mean_encoding_main_hyperpredict_network_datasize0.25.ckpt")["state_dict"])
+model.load_state_dict(torch.load("models/checkpoints/symnet_clapirn/sensitivity_analysis/total_val_loss=0.00520-epoch=34-logger-training_training_mean_encoding_main_hyperpredict_network_datasize0.25_weight_0.5_original_data.ckpt")["state_dict"])
+
 
 # lam = np.linspace(-5, 0, 200)
 # lam = np.exp(lam)
@@ -62,11 +64,11 @@ columns_label = ["pair_idx","moving_index", "fixed_index", "predicted_dice","lam
 
 dice_average_per_label_per_lamda = pd.DataFrame(columns = columns_label)
 count  = 1
-print("len of test generator", len(test_generator))
+print("len of test generator", len(testing_sub))
 with torch.no_grad():
-    for pair_idx, data in enumerate(test_generator):
-        if pair_idx > 0:
-            break
+    for pair_idx, data in enumerate(testing_sub):
+        # if pair_idx > 0:
+        #     break
         
         pred = []
         tar = []    
@@ -79,8 +81,8 @@ with torch.no_grad():
         
         # per_image.to_csv("results/symnet_clapirn/mean_encoding_0.25%_data_values_images.csv", mode='a', header=True if count ==1 else False, index=False)
         # per_label.to_csv("results/symnet_clapirn/mean_encoding_0.25%_data_values_labels.csv", mode='a', header=True if count == 1 else False, index=False)
-        per_image.to_csv("results/symnet_clapirn/testing.csv", mode='a', header=True if count ==1 else False, index=False)
-        per_label.to_csv("results/symnet_clapirn/tester.csv", mode='a', header=True if count == 1 else False, index=False)
+        per_image.to_csv("results/symnet_clapirn/sensitivity_analysis/sensitivity_analysis_image_0.5.csv", mode='a', header=True if count ==1 else False, index=False)
+        # per_label.to_csv("results/symnet_clapirn/tester.csv", mode='a', header=True if count == 1 else False, index=False)
         
         print(count)
         count += 1
@@ -92,8 +94,8 @@ Things to do
 2. remove all labels that are not needed
 
 """
-#alongside taking the nfv below 0.5%, also select the maxium dice value for each label before sending saving the csv file. Do it here
-dice_average_per_label_per_lamda = pd.read_csv("results/symnet_clapirn/tester.csv")
+# #alongside taking the nfv below 0.5%, also select the maxium dice value for each label before sending saving the csv file. Do it here
+# dice_average_per_label_per_lamda = pd.read_csv("results/symnet_clapirn/tester.csv")
 
-#group by image pair and label and take the max dice value for each label
-dice_average_per_label_per_lamda = dice_average_per_label_per_lamda.groupby(['pair_idx', 'label']).agg({'predicted_dice': 'max'}).reset_index()
+# #group by image pair and label and take the max dice value for each label
+# dice_average_per_label_per_lamda = dice_average_per_label_per_lamda.groupby(['pair_idx', 'label']).agg({'predicted_dice': 'max'}).reset_index()

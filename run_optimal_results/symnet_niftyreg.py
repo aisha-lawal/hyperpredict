@@ -14,10 +14,14 @@ plt.rcParams["figure.figsize"] = (12,8)
 maximum_nfv = 160 * 192 * 224
 
 #get optimal based on highest dice
-hyperpredict_optimal_registration = pd.read_csv("../results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx-8_0_datasize0.25_label.csv")
-hyperpredict_optimal_registration = hyperpredict_optimal_registration.groupby(["pair_idx", "label"], as_index=False).apply(lambda x: x[x.predicted_dice == x.predicted_dice.max()])
+# hyperpredict_optimal_registration = pd.read_csv("../results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx-6_0_datasize0.25_label.csv")
+# hyperpredict_optimal_registration = hyperpredict_optimal_registration.groupby(["pair_idx", "label"], as_index=False).apply(lambda x: x[x.predicted_dice == x.predicted_dice.max()]).reset_index(drop=True)
+# print("len of optimal", len(hyperpredict_optimal_registration))
 
-# hyperpredict_optimal_registration = pd.read_csv("../results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx-8_0_datasize0.25_label.csv")
+
+hyperpredict_optimal_registration = pd.read_csv("../results/symnet_niftyreg/sensitivity_analysis/sensitivity_analysis_image_0.5_image.csv")
+# hyperpredict_optimal_registration = hyperpredict_optimal_registration.groupby(["pair_idx"], as_index=False).apply(lambda x: x[x.predicted_dice == x.predicted_dice.max()]).reset_index(drop=True)
+print("len of optimal", len(hyperpredict_optimal_registration))
 
 def dice(im1, atlas):
     im1 = im1.squeeze(0)
@@ -98,7 +102,7 @@ def niftyreg(pair_idx, moving_index, fixed_index, fixed_label, bending_energy, l
     fixed_image, moving_image, warped_image, fixed_label, moving_label, warped_label, jac_det, deformation_field = load_nii(fixed_image, moving_image,warped_image, fxd_lbl, mov_lbl, warped_label, jac_det, deformation_field, bspline)
     print("shape of everything from niftyreg after registration ", fixed_image.shape, moving_image.shape, warped_image.shape, fixed_label.shape, moving_label.shape, warped_label.shape, jac_det.shape,
            deformation_field.shape, fixed_label.min(), fixed_label.max(), moving_label.min(), moving_label.max(), warped_label.min(), warped_label.max())
-    folded_voxels = torch.count_nonzero(jac_det.squeeze(0)<0) #neg value computation
+    folded_voxels = torch.count_nonzero(jac_det.squeeze(0)<0) 
     dice_score = dice(torch.floor(warped_label), torch.floor(fixed_label))
 
     return dice_score, folded_voxels.item()
@@ -120,7 +124,8 @@ lr_caudate = (8, 27)
 
 hyperpredict_optimal_registration["target_dice"] = 0
 hyperpredict_optimal_registration["target_jac"] = 0
-hyperpredict_optimal_registration["target_label"] = "No"
+# hyperpredict_optimal_registration["target_label"] = "No" #label
+
 # labels = {"Thalamus": lr_thalamus, "Hippocampus": lr_hippocampus, "Amygdala": lr_amygdala, "Accumbens": lr_accumbens, "Putamen": lr_putamen, "Pallidum": lr_pallidum, "Caudate": lr_caudate, "Cerebellum WM": lr_cerebellum_WM,
 #                    "Cerebellum Cortex": lr_cerebellum_cortex, "Cerebral Cortex": lr_cerebral_cortex, "Cerebral WM": lr_cerebral_WM, "Vessel": lr_vessel, "Lateral Ventricle": lr_lateral_ventricle}
 
@@ -136,36 +141,36 @@ for i in range(len(hyperpredict_optimal_registration)):
     be = hyperpredict_optimal_registration.loc[i, 'be']
     sx = hyperpredict_optimal_registration.loc[i, 'sx']
     le = hyperpredict_optimal_registration.loc[i, 'le']
-    label = hyperpredict_optimal_registration.loc[i, 'label']
+    # label = hyperpredict_optimal_registration.loc[i, 'label'] #for label
     fixed_label = load("../data/oasis/testing/OASIS_OAS1_"+pad_with_zeros(fixed_index)+"_MR1/aligned_seg35.nii.gz")
     target_dice, target_jac = niftyreg(i, moving_index, fixed_index, fixed_label, be, le, sx, "testing")
-    # target_dice =  torch.stack(target_dice).mean().item() 
-    # hyperpredict_optimal_registration.loc[i, "target_jac"] = target_jac
-    print(i)
-    df = pd.DataFrame(columns=["pair_idx", "moving_index", "fixed_index",  "predicted_dice", "be", "le", "sx", "predicted_jac", "target_dice", "target_jac"])
-#     #add row to df
-    df.loc[i] = hyperpredict_optimal_registration.loc[i]
 
-    # df.to_csv("results/symnet_niftyreg/alternative_models/mean_encoding_main_hyperpredict_network_1hidden_layers_image_target_values.csv", mode='a', header=False, index=False)
-
-
-    for l in labels.keys():
-        if l == label:
-            target_label = l
-            target_avg = (target_dice[labels[l][0]-1] + target_dice[labels[l][1]-1])/2
-
-
-    hyperpredict_optimal_registration.loc[i, "target_dice"] = target_avg.item()
+    #image start
+    target_dice =  torch.stack(target_dice).mean().item() 
     hyperpredict_optimal_registration.loc[i, "target_jac"] = target_jac
-    hyperpredict_optimal_registration.loc[i, "target_label"] = target_label
-    #get row result and save it in a sub file
-    #create a dataframe with the results
-    df = pd.DataFrame(columns=["pair_idx", "moving_index", "fixed_index",  "predicted_dice", "be", "le", "sx", "label", "predicted_jac", "target_dice", "target_jac", "target_label"])
-    #add row to df
+    hyperpredict_optimal_registration.loc[i, "target_dice"] = target_dice
+    df = pd.DataFrame(columns=["pair_idx", "moving_index", "fixed_index",  "predicted_dice", "be", "le", "sx", "predicted_jac", "target_dice", "target_jac"])
     df.loc[i] = hyperpredict_optimal_registration.loc[i]
-
-    df.to_csv("../results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx-8_0_datasize0.25_label_target.csv", mode='a', header=False, index=False)
+    df.to_csv("../results/symnet_niftyreg/sensitivity_analysis/sensitivity_analysis_image_0.5_image_target.csv", mode='a', header=False, index=False)
     print(i)
-# hyperpredict_optimal_registration.to_csv("optimal_hp_0.5%_hyperpredict_niftyreg.csv")
+    #image stop
+
+    #label start
+    # for l in labels.keys():
+    #     if l == label:
+    #         target_label = l
+    #         target_avg = (target_dice[labels[l][0]-1] + target_dice[labels[l][1]-1])/2
+
+
+    # hyperpredict_optimal_registration.loc[i, "target_dice"] = target_avg.item()
+    # hyperpredict_optimal_registration.loc[i, "target_jac"] = target_jac
+    # hyperpredict_optimal_registration.loc[i, "target_label"] = target_label
+    # df = pd.DataFrame(columns=["pair_idx", "moving_index", "fixed_index",  "predicted_dice", "be", "le", "sx", "label", "predicted_jac", "target_dice", "target_jac", "target_label"])
+    # df.loc[i] = hyperpredict_optimal_registration.loc[i]
+    # df.to_csv("../results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx-6_0_datasize0.25_label_target.csv", mode='a', header=False, index=False)
+    # print(i)
+    #label stop
+
+
 
 

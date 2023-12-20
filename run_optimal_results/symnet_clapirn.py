@@ -6,7 +6,7 @@ import numpy as np
 from utils import SetParams, load, imgnorm, compute_metric, generate_grid_unit
 
 #running 1 and 2 hidden layers
-hyperpredict_df= pd.read_csv("../results/symnet_clapirn/data_size/mean_encoding_0.25%_data_values_images.csv")
+hyperpredict_df= pd.read_csv("../results/symnet_clapirn/sensitivity_analysis/sensitivity_analysis_image_0.5.csv")
 
 #Run registration with optimal lambda
 registration_model = "clapirn"
@@ -67,5 +67,5 @@ for i in range(len(hyperpredict_df)):
     hyperpredict_df.loc[i, "target_dice"] = target_dice.mean().item()
     hyperpredict_df.loc[i, "target_jac"] = target_jac.item()
     print(i)
-hyperpredict_df.to_csv("../results/symnet_clapirn/data_size/mean_encoding_0.25%_data_values_images_target_values.csv")
+hyperpredict_df.to_csv("../results/symnet_clapirn/sensitivity_analysis/sensitivity_analysis_image_0.5_target.csv")
 

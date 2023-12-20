@@ -169,14 +169,16 @@ class HyperPredictLightningModule(pl.LightningModule):
                     predicted_dice = self.dice_mapping(linear_map)
                     predicted_jac = self.jacobian_mapping(linear_map)
                     predicted_jac = (predicted_jac * self.nfv_clapirn)if predicted_jac > 0 else torch.tensor([0.0]).float()
-                    if predicted_jac < (nfv_percent/100) * self.maximum_nfv:
-                        dice_average_per_image_per_lamda = pd.concat([dice_average_per_image_per_lamda, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0],
-                                                                                                                         "predicted_dice": predicted_dice.mean().item() ,"lamda": lamda.item(), "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)
-                        for label in labels.keys():
-                            pred_avg = (predicted_dice[0][labels[label][0]-1] + predicted_dice[0][labels[label][1]-1])/2
+                    # if predicted_jac < (nfv_percent/100) * self.maximum_nfv:
+                    #     dice_average_per_image_per_lamda = pd.concat([dice_average_per_image_per_lamda, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0],
+                    #              
+                    dice_average_per_image_per_lamda = pd.concat([dice_average_per_image_per_lamda, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0],
+                                                                                                                   "predicted_dice": predicted_dice.mean().item() ,"lamda": lamda.item(), "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)
+                    for label in labels.keys():
+                        pred_avg = (predicted_dice[0][labels[label][0]-1] + predicted_dice[0][labels[label][1]-1])/2
 
-                            dice_average_per_label_per_lamda = pd.concat([dice_average_per_label_per_lamda, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4], "fixed_index": batch[5], 
-                                                                                                                          "predicted_dice": pred_avg.item(), "lamda": lamda.item(), "label": label, "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)      
+                        dice_average_per_label_per_lamda = pd.concat([dice_average_per_label_per_lamda, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4], "fixed_index": batch[5], 
+                                                                                                                        "predicted_dice": pred_avg.item(), "lamda": lamda.item(), "label": label, "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)      
                         
                 return dice_average_per_image_per_lamda, dice_average_per_label_per_lamda
 
@@ -197,9 +199,9 @@ class HyperPredictLightningModule(pl.LightningModule):
         lr_caudate = (8, 27)
 
 
-        # labels = {"Thalamus": lr_thalamus, "Hippocampus": lr_hippocampus, "Amygdala": lr_amygdala, "Accumbens": lr_accumbens, "Putamen": lr_putamen, "Pallidum": lr_pallidum, "Caudate": lr_caudate, "Cerebellum WM": lr_cerebellum_WM,
-        #            "Cerebellum Cortex": lr_cerebellum_cortex, "Cerebral Cortex": lr_cerebral_cortex, "Cerebral WM": lr_cerebral_WM, "Vessel": lr_vessel, "Lateral Ventricle": lr_lateral_ventricle}
-        labels = {"Thalamus": lr_thalamus, "Hippocampus": lr_hippocampus, "Amygdala": lr_amygdala, "Accumbens": lr_accumbens, "Putamen": lr_putamen, "Pallidum": lr_pallidum, "Caudate": lr_caudate}
+        labels = {"Thalamus": lr_thalamus, "Hippocampus": lr_hippocampus, "Amygdala": lr_amygdala, "Accumbens": lr_accumbens, "Putamen": lr_putamen, "Pallidum": lr_pallidum, "Caudate": lr_caudate, "Cerebellum WM": lr_cerebellum_WM,
+                   "Cerebellum Cortex": lr_cerebellum_cortex, "Cerebral Cortex": lr_cerebral_cortex, "Cerebral WM": lr_cerebral_WM, "Vessel": lr_vessel, "Lateral Ventricle": lr_lateral_ventricle}
+        # labels = {"Thalamus": lr_thalamus, "Hippocampus": lr_hippocampus, "Amygdala": lr_amygdala, "Accumbens": lr_accumbens, "Putamen": lr_putamen, "Pallidum": lr_pallidum, "Caudate": lr_caudate}
 
         columns = ["pair_idx", "moving_index", "fixed_index", "predicted_dice", "be", "le","sx", "predicted_jac"]
         dice_average_per_image_per_be = pd.DataFrame(columns = columns)
@@ -243,12 +245,14 @@ class HyperPredictLightningModule(pl.LightningModule):
                     if predicted_jac < (nfv_percent/100) * self.maximum_nfv:
                         dice_average_per_image_per_be = pd.concat([dice_average_per_image_per_be, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0], "predicted_dice": predicted_dice.mean().item() ,"be": be.item(), 
                                                                                                                 "le": le.item(), "sx": sx.item(), "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)
+                    # dice_average_per_image_per_be = pd.concat([dice_average_per_image_per_be, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0], "predicted_dice": predicted_dice.mean().item() ,"be": be.item(), 
+                    #                                                                                             "le": le.item(), "sx": sx.item(), "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)
                         for label in labels.keys():
                             pred_avg = (predicted_dice[0][labels[label][0]-1] + predicted_dice[0][labels[label][1]-1])/2
 
                             dice_average_per_label_per_be = pd.concat([dice_average_per_label_per_be, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0], "predicted_dice": pred_avg.item(), "be": be.item(),
                                                                                                                     "le": le.item(),"sx": sx.item(), "label": label, "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)      
-                        
+                    
             return dice_average_per_image_per_be, dice_average_per_label_per_be
         
 
@@ -267,7 +271,7 @@ class HyperPredictLightningModule(pl.LightningModule):
 class ComputeLoss(nn.Module):
     def __init__(self, task_num):
         super(ComputeLoss, self).__init__()
-        self.weight_losses = 0.1
+        self.weight_losses = 1.0
         self.minimum = 0
         self.maximum = 0
 

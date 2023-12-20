@@ -69,7 +69,7 @@ def main():
         trainer = Trainer(fast_dev_run=False,overfit_batches = 7,limit_val_batches=1, max_epochs = 25, log_every_n_steps = 2, devices= 1, logger = logger)
         
     elif args.run_type == "training":
-        trainer = Trainer(fast_dev_run=False, max_epochs= 150, log_every_n_steps=2, devices= 1,callbacks=[model_checkpoint, early_stopping], logger = logger, precision=32, limit_train_batches= args.data_size)
+        trainer = Trainer(fast_dev_run=False, max_epochs= 30, log_every_n_steps=2, devices= 1,callbacks=[model_checkpoint, early_stopping], logger = logger, precision=32, limit_train_batches= args.data_size, limit_val_batches= args.data_size)
     
     trainer.fit(model = pl_model, train_dataloaders = training_generator, val_dataloaders= validation_generator)
 
