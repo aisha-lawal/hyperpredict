@@ -22,8 +22,11 @@ def arg():
     parser.add_argument("--run_type", type=str, dest="run_type", 
                 default="training", help="training/sanity_check/overfitting")
     
-    parser.add_argument("--data_size", type=float, dest="data_size", 
-                default=1.0, help="limit training and validation data size")
+    parser.add_argument("--train_data_size", type=float, dest="train_data_size", 
+                default=1.0, help="limit training data size")
+    
+    parser.add_argument("--val_data_size", type=float, dest="val_data_size", 
+                default=1.0, help="limit validation data size")
     
     parser.add_argument("--logger_name", type=str, dest="logger_name", 
                 default="", help="name of the logger")

@@ -1,12 +1,20 @@
 import torch
 import torch.nn as nn
+import torch.nn.init as init
 import numpy as np
+import os
 from utils import generate_grid_unit, SetParams, niftyreg, compute_metric, MaskedAutoEncoder
 import lightning.pytorch as pl
 import pandas as pd
 from datetime import datetime
+# os.environ["CUDA_VISIBLE_DEVICES"] = "6"
+
+torch.manual_seed(42)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# torch.cuda.set_device(5)
+
+
 
 class HyperPredictLightningModule(pl.LightningModule):
     def __init__(self, hyper_predict, registration_model, encoder_model, imgshape, enc, batch_size, encoding_type):
@@ -171,7 +179,8 @@ class HyperPredictLightningModule(pl.LightningModule):
                     predicted_jac = (predicted_jac * self.nfv_clapirn)if predicted_jac > 0 else torch.tensor([0.0]).float()
                     # if predicted_jac < (nfv_percent/100) * self.maximum_nfv:
                     #     dice_average_per_image_per_lamda = pd.concat([dice_average_per_image_per_lamda, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0],
-                    #              
+                    #                                                                                                "predicted_dice": predicted_dice.mean().item() ,"lamda": lamda.item(), "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)
+                    
                     dice_average_per_image_per_lamda = pd.concat([dice_average_per_image_per_lamda, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0],
                                                                                                                    "predicted_dice": predicted_dice.mean().item() ,"lamda": lamda.item(), "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)
                     for label in labels.keys():
@@ -199,15 +208,18 @@ class HyperPredictLightningModule(pl.LightningModule):
         lr_caudate = (8, 27)
 
 
-        labels = {"Thalamus": lr_thalamus, "Hippocampus": lr_hippocampus, "Amygdala": lr_amygdala, "Accumbens": lr_accumbens, "Putamen": lr_putamen, "Pallidum": lr_pallidum, "Caudate": lr_caudate, "Cerebellum WM": lr_cerebellum_WM,
-                   "Cerebellum Cortex": lr_cerebellum_cortex, "Cerebral Cortex": lr_cerebral_cortex, "Cerebral WM": lr_cerebral_WM, "Vessel": lr_vessel, "Lateral Ventricle": lr_lateral_ventricle}
-        # labels = {"Thalamus": lr_thalamus, "Hippocampus": lr_hippocampus, "Amygdala": lr_amygdala, "Accumbens": lr_accumbens, "Putamen": lr_putamen, "Pallidum": lr_pallidum, "Caudate": lr_caudate}
+        # labels = {"Thalamus": lr_thalamus, "Hippocampus": lr_hippocampus, "Amygdala": lr_amygdala, "Accumbens": lr_accumbens, "Putamen": lr_putamen, "Pallidum": lr_pallidum, "Caudate": lr_caudate, "Cerebellum WM": lr_cerebellum_WM,
+        #            "Cerebellum Cortex": lr_cerebellum_cortex, "Cerebral Cortex": lr_cerebral_cortex, "Cerebral WM": lr_cerebral_WM, "Vessel": lr_vessel, "Lateral Ventricle": lr_lateral_ventricle}
+        labels = {"Thalamus": lr_thalamus, "Hippocampus": lr_hippocampus, "Amygdala": lr_amygdala, "Accumbens": lr_accumbens, "Putamen": lr_putamen, "Pallidum": lr_pallidum, "Caudate": lr_caudate}
 
         columns = ["pair_idx", "moving_index", "fixed_index", "predicted_dice", "be", "le","sx", "predicted_jac"]
         dice_average_per_image_per_be = pd.DataFrame(columns = columns)
+        dice_average_per_image_per_be_no_optim = pd.DataFrame(columns = columns)
 
         columns_label = ["pair_idx","moving_index", "fixed_index", "predicted_dice", "be", "le","sx", "label", "predicted_jac"]
         dice_average_per_label_per_be = pd.DataFrame(columns = columns_label)
+        dice_average_per_label_per_be_no_optim = pd.DataFrame(columns = columns_label)
+        
         with torch.no_grad():
 
             if self.encoder_model == "clapirn":
@@ -242,18 +254,30 @@ class HyperPredictLightningModule(pl.LightningModule):
                     predicted_dice = self.dice_mapping(linear_map)
                     predicted_jac = self.jacobian_mapping(linear_map)                
                     predicted_jac = (predicted_jac * self.nfv_niftyreg)if predicted_jac > 0 else torch.tensor([0.0]).float()
-                    # if predicted_jac < (nfv_percent/100) * self.maximum_nfv:
-                    #     dice_average_per_image_per_be = pd.concat([dice_average_per_image_per_be, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0], "predicted_dice": predicted_dice.mean().item() ,"be": be.item(), 
-                    #                                                                                             "le": le.item(), "sx": sx.item(), "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)
-                    dice_average_per_image_per_be = pd.concat([dice_average_per_image_per_be, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0], "predicted_dice": predicted_dice.mean().item() ,"be": be.item(), 
+                    if predicted_jac < (nfv_percent/100) * self.maximum_nfv:
+                        dice_average_per_image_per_be = pd.concat([dice_average_per_image_per_be, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0], "predicted_dice": predicted_dice.mean().item() ,"be": be.item(), 
                                                                                                                 "le": le.item(), "sx": sx.item(), "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)
-                    for label in labels.keys():
-                        pred_avg = (predicted_dice[0][labels[label][0]-1] + predicted_dice[0][labels[label][1]-1])/2
+                        for label in labels.keys():
+                            pred_avg = (predicted_dice[0][labels[label][0]-1] + predicted_dice[0][labels[label][1]-1])/2
 
-                        dice_average_per_label_per_be = pd.concat([dice_average_per_label_per_be, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0], "predicted_dice": pred_avg.item(), "be": be.item(),
-                                                                                                                "le": le.item(),"sx": sx.item(), "label": label, "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)      
+                            dice_average_per_label_per_be = pd.concat([dice_average_per_label_per_be, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0], "predicted_dice": pred_avg.item(), "be": be.item(),
+                                                                                                                    "le": le.item(),"sx": sx.item(), "label": label, "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)      
                     
-            return dice_average_per_image_per_be, dice_average_per_label_per_be
+
+                    #no optim
+                    dice_average_per_image_per_be_no_optim = pd.concat([dice_average_per_image_per_be_no_optim, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0], "predicted_dice": predicted_dice.mean().item() ,"be": be.item(), 
+                                                                                                                "le": le.item(), "sx": sx.item(), "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)
+                    
+                    for label in labels.keys():
+                            pred_avg = (predicted_dice[0][labels[label][0]-1] + predicted_dice[0][labels[label][1]-1])/2
+
+                            dice_average_per_label_per_be_no_optim = pd.concat([dice_average_per_label_per_be_no_optim, pd.DataFrame({"pair_idx": pair_idx, "moving_index": batch[4][0], "fixed_index": batch[5][0], "predicted_dice": pred_avg.item(), "be": be.item(),
+                                                                                                                    "le": le.item(),"sx": sx.item(), "label": label, "predicted_jac":predicted_jac.item()}, index=[0])], ignore_index=True)      
+        
+            
+            # return dice_average_per_image_per_be, dice_average_per_label_per_be
+            
+            return dice_average_per_image_per_be, dice_average_per_label_per_be, dice_average_per_image_per_be_no_optim, dice_average_per_label_per_be_no_optim
         
 
     def global_statistics(self, encoded_representation, encoding_type):
@@ -271,7 +295,7 @@ class HyperPredictLightningModule(pl.LightningModule):
 class ComputeLoss(nn.Module):
     def __init__(self, task_num):
         super(ComputeLoss, self).__init__()
-        self.weight_losses = 1.0
+        self.weight_losses = 0.025
         self.minimum = 0
         self.maximum = 0
 
@@ -292,7 +316,6 @@ class ComputeLoss(nn.Module):
 
 
 def hyper_predict(in_features, mapping_features, out_features):
-    #mainly claprin
     lm_out_one = 64
     lm_out_two = 64
     lm_out_four = 32
@@ -322,83 +345,15 @@ def hyper_predict(in_features, mapping_features, out_features):
     nn.Linear(mapping_features, mapping_features),
     )
 
+    for module in [linear_mapping, dice_mapping, jacobian_mapping, mapping]:
+        for layer in module.modules():
+            if isinstance(layer, nn.Linear):
+                init.xavier_uniform_(layer.weight)
+                
+
+                init.zeros_(layer.bias)
+
+    
+
     return mapping, linear_mapping, dice_mapping, jacobian_mapping
-
-
-
-# def hyper_predict(in_features, mapping_features, out_features):
-
-#     #niftyreg ; total_val_loss=0.00691-epoch=17-logger-mean_encoding_2HLnfv_nfv_194404_no_loss_weight.ckpt
-#     lm_out_one = 64
-#     lm_out_two = 64
-#     lm_out_four = 32
-
-
-#     linear_mapping = nn.Sequential(
-#         nn.Linear(in_features, lm_out_one),
-#         nn.LeakyReLU(),
-#     )
-
-#     dice_mapping = nn.Sequential(
-#         nn.Linear(lm_out_one, lm_out_two),
-#         nn.LeakyReLU(),
-#         nn.Linear(lm_out_two, out_features -1),
-#     )
-
-#     jacobian_mapping = nn.Sequential(
-#         nn.Linear(lm_out_one,lm_out_four),
-#         nn.LeakyReLU(),
-#         nn.Linear(lm_out_four,8),
-#         nn.LeakyReLU(),
-#         nn.Linear(8,1),
-        
-#     )
-
-#     mapping = nn.Sequential(
-#     nn.Linear(1, mapping_features),
-#     nn.LeakyReLU(),
-#     nn.Linear(mapping_features, mapping_features),
-#     )
-
-#     return mapping, linear_mapping, dice_mapping, jacobian_mapping
-
-# def hyper_predict(in_features, mapping_features, out_features):
-
-#     #niftyreg; total_val_loss=0.06348-epoch=12-logger-mean_encoding_3HLnfv_nfv_23189_no_loss_weight_datasize0.25.ckpt
-#     lm_out_one = 64
-#     lm_out_two = 64
-#     lm_out_four = 64
-#     lm_out_five = 32
-
-
-
-#     linear_mapping = nn.Sequential(
-#         nn.Linear(in_features, lm_out_one),
-#         nn.LeakyReLU(),
-#     )
-
-#     dice_mapping = nn.Sequential(
-#         nn.Linear(lm_out_one, lm_out_two),
-#         nn.LeakyReLU(),
-#         nn.Linear(lm_out_two, out_features -1),
-#     )
-
-#     jacobian_mapping = nn.Sequential(
-#         nn.Linear(lm_out_one,lm_out_four),
-#         nn.LeakyReLU(),
-#         nn.Linear(lm_out_four,lm_out_five),
-#         nn.LeakyReLU(),
-#         nn.Linear(lm_out_five, 8),
-#         nn.LeakyReLU(),
-#         nn.Linear(8,1),
-        
-#     )
-
-#     mapping = nn.Sequential(
-#     nn.Linear(1, mapping_features),
-#     nn.LeakyReLU(),
-#     nn.Linear(mapping_features, mapping_features),
-#     )
-
-#     return mapping, linear_mapping, dice_mapping, jacobian_mapping
 

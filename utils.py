@@ -12,8 +12,12 @@ from models.registrations.clapirn import Lvl1, Lvl2, Lvl3
 from models.encoders.symnet import SYMNet
 import os
 import torch.nn.functional as F
+# os.environ["CUDA_VISIBLE_DEVICES"] = "6"
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# torch.cuda.set_device(5)
+
 mse_loss = nn.MSELoss()
 
 def load(img):

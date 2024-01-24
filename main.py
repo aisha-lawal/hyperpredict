@@ -1,5 +1,6 @@
 import torch
-from utils import generate_grid_unit, SetParams, niftyreg, compute_metric, MaskedAutoEncoder
+import os
+from utils import SetParams
 import datetime
 from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping
 from lightning.pytorch.loggers import WandbLogger
@@ -38,7 +39,7 @@ def main():
     )
     early_stopping = EarlyStopping(
         monitor= "total_val_loss",
-        patience= 8,
+        patience= 5,
         mode= "min",
     )
 
@@ -69,13 +70,14 @@ def main():
         trainer = Trainer(fast_dev_run=False,overfit_batches = 7,limit_val_batches=1, max_epochs = 25, log_every_n_steps = 2, devices= 1, logger = logger)
         
     elif args.run_type == "training":
-        trainer = Trainer(fast_dev_run=False, max_epochs= 30, log_every_n_steps=2, devices= 1,callbacks=[model_checkpoint, early_stopping], logger = logger, precision=32, limit_train_batches= args.data_size, limit_val_batches= args.data_size)
+        trainer = Trainer(fast_dev_run=False, max_epochs= 60, log_every_n_steps=2, devices= 1,callbacks=[model_checkpoint, early_stopping], logger = logger, precision=32, limit_train_batches= args.train_data_size, limit_val_batches=args.val_data_size)
     
     trainer.fit(model = pl_model, train_dataloaders = training_generator, val_dataloaders= validation_generator)
 
 
 
 if __name__ == "__main__":
+
 
     imgshape = (160, 192, 224)
     imgshape_4 = (160 / 4, 192 / 4, 224 / 4)
@@ -84,6 +86,7 @@ if __name__ == "__main__":
 
     batch_size = 8
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # torch.cuda.set_device(5)
     args = arg()
     range_flow = 0.4
     torch.set_float32_matmul_precision('high')
