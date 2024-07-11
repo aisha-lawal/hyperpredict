@@ -86,7 +86,6 @@ if __name__ == "__main__":
 
     batch_size = 8
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # torch.cuda.set_device(5)
     args = arg()
     range_flow = 0.4
     torch.set_float32_matmul_precision('high')

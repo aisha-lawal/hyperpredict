@@ -34,6 +34,8 @@ If you wish to go ahead with the change, we have provided two scripts `run_clair
 2. Save the image files in data/oasis/training, data/oasis/validation, and data/oasis/testing. 
 3. Run `run_clairn.py` and `run_niftyreg.py` from the terminal to generate registration results of the image pair for clapirn and niftyreg respectively.
 
+To use the same registration results (i.e metrics from clapirn and niftyreg obtained to training hyperpredict) and to access the model checkpoints used in the paper, refer to: [hyperpredict](). This box folder contains a zipped file of the complete project including csv files, checkpoints and registration results. Simply download, unzip and use as desired.
+
 ## Inference
 To test Hyperpredict<sub>clap</sub> run `test_hyperpredict_clapirn.py` with nfv_percent set to desired value, e.g
 ```
@@ -44,9 +46,9 @@ To test Hyperpredict<sub>nr</sub> run `test_hyperpredict_niftyreg.py` with nfv_p
 ```
 test_hyperpredict_niftyreg.py --nfv_percent 0.05
 ```
-This will by default test with the best pretrained model in models/checkpoints/.. and return optimal instances based on nfv_percent 
+This will by default test with the trained model in models/checkpoints/.. and return optimal instances based on nfv_percent 
 
-To run the test results through the registration, run `symnet_clapirn.py` or `symnet_niftyreg.py` located in directory run_optimal_results/. Edit the respective files to save the files in a desired directory.
+To run the test results through the registration, run `symnet_clapirn.py` or `symnet_niftyreg.py` located in directory run_optimal_results/. Edit the respective files to save the results in desired directory.
 
 ## Train your own model
 We have provided list of arguments depending on use-case, refer to `setting.py` to review the full list. To train yur own model;
@@ -57,6 +59,9 @@ We have provided list of arguments depending on use-case, refer to `setting.py` 
 ## Acknowledgment
 The pretrained models are obtained from from [cLapIRN](https://github.com/cwmok/Conditional_LapIRN/tree/main) and [Symnet](https://github.com/cwmok/Fast-Symmetric-Diffeomorphic-Image-Registration-with-Convolutional-Neural-Networks/tree/master). We obtain our data from [neurite-oasis](https://github.com/adalca/medical-datasets/blob/master/neurite-oasis.md)
 
+
+## HyperPredict paper
+If you use HyperPredict or some part of the code, please cite [bibtex](https://scholar.googleusercontent.com/scholar.bib?q=info:cOXRYpI7RwgJ:scholar.google.com/&output=citation&scisdr=ClE70ZlzEJuPtyTNbGM:AFWwaeYAAAAAZo_LdGNDJ6HUZO94p_k_bWHC_x4&scisig=AFWwaeYAAAAAZo_LdLQYQaPpT22X4v2nMVVyQbc&scisf=4&ct=citation&cd=-1&hl=en). You can find the publised paper [here](https://www.melba-journal.org/papers/2024:005.html) and an explanatory video [here](https://www.youtube.com/watch?v=0tncfud8guw&t=1s).
 
 ##### Contact 
 For any questions or potential collaborations contact any of the following people:

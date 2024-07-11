@@ -367,7 +367,7 @@ class ConditionalLaplacianLvl3(nn.Module):
         fea_e0 = self.input_encoder_lvl1(cat_input)
         e0 = self.down_conv(fea_e0)
         return e0
-        # get encoding from here, this has already somehow learnt the registration cos it concatenates with warped x
+        # get encoding from here
 
         # e0 = e0 + lvl2_embedding
 

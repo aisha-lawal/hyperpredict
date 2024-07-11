@@ -12,11 +12,9 @@ from models.registrations.clapirn import Lvl1, Lvl2, Lvl3
 from models.encoders.symnet import SYMNet
 import os
 import torch.nn.functional as F
-# os.environ["CUDA_VISIBLE_DEVICES"] = "6"
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# torch.cuda.set_device(5)
 
 mse_loss = nn.MSELoss()
 
@@ -108,7 +106,6 @@ def niftyreg(moving_index, fixed_index, fixed_label, bending_energy, spacing, ta
 
     warped_label, jac_det, deformation_field = load_nii(warped_label, jac_det, deformation_field, bspline)
     #dice after registration
-    # print("in niftyreg warped shapes ", warped_label.shape, fixed_label.shape)  #shape is [1, 144, 152, 192]
     dice_per_label = dice3D(torch.floor(warped_label), torch.floor(fixed_label).squeeze(0)) 
     print("in niftyreg check jac_det shape ", jac_det.shape)
 
@@ -360,8 +357,8 @@ def jacobian_determinant_batch(batch_deformation_field):
         y_component = deformation_field[1]
 
         J = torch.gradient(deformation_field )
-        dx = J[1] # derivative of x component wrt y coordinate
-        dy = J[2] # derivative of y component wrt x corrdinate
+        dx = J[1] 
+        dy = J[2] 
 
         Jdet = (dx[0,...] * dy[1,...] - dy[0,...] * dx[1,...]).mean()
         batch_jdet.append(Jdet)
@@ -385,8 +382,8 @@ def num_folded_voxels(batch_deformation_field):
         y_component = deformation_field[1]
 
         J = torch.gradient(deformation_field )
-        dx = J[1] # derivative of x component wrt y coordinate
-        dy = J[2] # derivative of y component wrt x corrdinate
+        dx = J[1]
+        dy = J[2]
 
         Jdet = (dx[0,...] * dy[1,...] - dy[0,...] * dx[1,...])
 
@@ -491,8 +488,7 @@ def normalize(loss, target):
     return (loss-target.min())/(target.max()- target.min())
 
 def gaussian_nllLoss(input, target, var):
-    #should be computed for each batch, take sample-wise mean, then batch-wise mean.
-    log_var = torch.log(var) #using fixed variance, i can use a varying var and clamp at epsilon
+    log_var = torch.log(var)
     loss = (log_var + ((torch.pow(input - target, 2))/var)) * 0.5
     return loss.mean()
 
@@ -617,7 +613,7 @@ class SetParams(nn.Module):
             return encoder
 
         elif encoder_model == "mae":
-            chkpt_dir = encoder_path #replace with encoder path
+            chkpt_dir = encoder_path 
             model_mae = MaskedAutoEncoder().prepare_model(chkpt_dir, 'mae_vit_large_patch16')
             for params in model_mae.parameters():
                 params.requires_grad = False

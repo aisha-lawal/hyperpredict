@@ -52,9 +52,6 @@ model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/learning_li
 le = np.linspace(-10, 0, 200)
 le = np.exp(le)
 
-# be = [0.0200, 0.0164, 0.0194, 0.0067, 0.0215]
-# le = [0.0085, 0.0067, 0.0080, 0.0091, 0.0102, 0.0076]
-
 be = [0.001]
 sx = 5
 for params in model.parameters():
