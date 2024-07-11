@@ -1,12 +1,14 @@
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F
+import os
 
 import numpy as np
+# os.environ["CUDA_VISIBLE_DEVICES"] = "6"
 
-# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# torch.cuda.set_device(device)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# torch.cuda.set_device(5)
+# device = torch.device("cuda:6" if torch.cuda.is_available() else "cpu")
 class SYMNet(nn.Module):
     def __init__(self, in_channel, n_classes, start_channel):
         self.in_channel = in_channel

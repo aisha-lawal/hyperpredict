@@ -316,6 +316,7 @@ class ComputeLoss(nn.Module):
 
 
 def hyper_predict(in_features, mapping_features, out_features):
+    #mainly claprin
     lm_out_one = 64
     lm_out_two = 64
     lm_out_four = 32
@@ -349,11 +350,97 @@ def hyper_predict(in_features, mapping_features, out_features):
         for layer in module.modules():
             if isinstance(layer, nn.Linear):
                 init.xavier_uniform_(layer.weight)
-                
-
                 init.zeros_(layer.bias)
 
-    
-
     return mapping, linear_mapping, dice_mapping, jacobian_mapping
+
+
+
+# def hyper_predict(in_features, mapping_features, out_features):
+
+#     #niftyreg ; total_val_loss=0.00691-epoch=17-logger-mean_encoding_2HLnfv_nfv_194404_no_loss_weight.ckpt
+#     lm_out_one = 64
+#     lm_out_two = 64
+#     lm_out_four = 32
+
+
+#     linear_mapping = nn.Sequential(
+#         nn.Linear(in_features, lm_out_one),
+#         nn.LeakyReLU(),
+#     )
+
+#     dice_mapping = nn.Sequential(
+#         nn.Linear(lm_out_one, lm_out_two),
+#         nn.LeakyReLU(),
+#         nn.Linear(lm_out_two, out_features -1),
+#     )
+
+#     jacobian_mapping = nn.Sequential(
+#         nn.Linear(lm_out_one,lm_out_four),
+#         nn.LeakyReLU(),
+#         nn.Linear(lm_out_four,8),
+#         nn.LeakyReLU(),
+#         nn.Linear(8,1),
+        
+#     )
+
+#     mapping = nn.Sequential(
+#     nn.Linear(1, mapping_features),
+#     nn.LeakyReLU(),
+#     nn.Linear(mapping_features, mapping_features),
+#     )
+#     for module in [linear_mapping, dice_mapping, jacobian_mapping, mapping]:
+#         for layer in module.modules():
+#             if isinstance(layer, nn.Linear):
+#                 init.xavier_uniform_(layer.weight)
+#                 # init.kaiming_uniform_(layer.weight)
+#                 # init.uniform_(layer.weight, 0, 0.2)
+#                 # torch.nn.init.uniform_(layer.weight, a=-np.sqrt(6/layer.weight.size(1)), b=np.sqrt(6/layer.weight.size(1))) #siren init
+
+#                 init.zeros_(layer.bias)
+
+
+#     return mapping, linear_mapping, dice_mapping, jacobian_mapping
+
+# def hyper_predict(in_features, mapping_features, out_features):
+
+#     #niftyreg; total_val_loss=0.06348-epoch=12-logger-mean_encoding_3HLnfv_nfv_23189_no_loss_weight_datasize0.25.ckpt
+#     lm_out_one = 64
+#     lm_out_two = 64
+#     lm_out_four = 64
+#     lm_out_five = 32
+
+
+
+#     linear_mapping = nn.Sequential(
+#         nn.Linear(in_features, lm_out_one),
+#         nn.LeakyReLU(),
+#     )
+
+#     dice_mapping = nn.Sequential(
+#         nn.Linear(lm_out_one, lm_out_two),
+#         nn.LeakyReLU(),
+#         nn.Linear(lm_out_two, out_features -1),
+#     )
+
+#     jacobian_mapping = nn.Sequential(
+#         nn.Linear(lm_out_one,lm_out_four),
+#         nn.LeakyReLU(),
+#         nn.Linear(lm_out_four,lm_out_five),
+#         nn.LeakyReLU(),
+#         nn.Linear(lm_out_five, 8),
+#         nn.LeakyReLU(),
+#         nn.Linear(8,1),
+        
+#     )
+
+#     mapping = nn.Sequential(
+#     nn.Linear(1, mapping_features),
+#     nn.LeakyReLU(),
+#     nn.Linear(mapping_features, mapping_features),
+#     )
+
+#     return mapping, linear_mapping, dice_mapping, jacobian_mapping
+
+
 

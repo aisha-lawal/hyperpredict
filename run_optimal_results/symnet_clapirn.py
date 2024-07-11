@@ -5,8 +5,17 @@ import torch
 import numpy as np
 from utils import SetParams, load, imgnorm, compute_metric, generate_grid_unit
 
-#running 1 and 2 hidden layers
-hyperpredict_df= pd.read_csv("../results/symnet_clapirn/sensitivity_analysis/sensitivity_analysis_image_0.5.csv")
+
+
+# get optimal based on highest dice - label
+hyperpredict_df = pd.read_csv("../results/symnet_clapirn/final_result/final_label_1.0_alpha.csv")
+hyperpredict_df = hyperpredict_df.groupby(["pair_idx", "label"], as_index=False).apply(lambda x: x[x.predicted_dice == x.predicted_dice.max()]).reset_index(drop=True)
+print("len of optimal", len(hyperpredict_df))
+
+# #for comparison - image
+# hyperpredict_df = pd.read_csv("../results/symnet_clapirn/final_result/xavier_0.25_seeded_labels_quick.csv")
+# # hyperpredict_df = hyperpredict_df.groupby(["pair_idx"], as_index=False).apply(lambda x: x[x.predicted_dice == x.predicted_dice.max()]).reset_index(drop=True)
+# print("len of optimal", len(hyperpredict_df))
 
 #Run registration with optimal lambda
 registration_model = "clapirn"
@@ -34,13 +43,17 @@ lr_thalamus = (7, 26)
 
 hyperpredict_df["target_dice"] = 0
 hyperpredict_df["target_jac"] = 0
+hyperpredict_df["target_label"] = "No" #for label
+
+labels = {"Thalamus": lr_thalamus, "Hippocampus": lr_hippocampus, "Amygdala": lr_amygdala, "Accumbens": lr_accumbens, "Putamen": lr_putamen, "Pallidum": lr_pallidum, "Caudate": lr_caudate}
 
 print(len(hyperpredict_df))
 for i in range(len(hyperpredict_df)):
     moving_index = hyperpredict_df.loc[i, 'moving_index']
     fixed_index = hyperpredict_df.loc[i, 'fixed_index']
     lamda = hyperpredict_df.loc[i, 'lamda']
-   
+    label = hyperpredict_df.loc[i, 'label'] #for label
+    
     moving_path =  "../data/oasis/testing/OASIS_OAS1_0"+str(moving_index)+"_MR1/aligned_norm.nii.gz"
     fixed_path =  "../data/oasis/testing/OASIS_OAS1_0"+str(fixed_index)+"_MR1/aligned_norm.nii.gz"
     moving_lbl_path = "../data/oasis/testing/OASIS_OAS1_0"+str(moving_index)+"_MR1/aligned_seg35.nii.gz"
@@ -62,10 +75,31 @@ for i in range(len(hyperpredict_df)):
 
     deformation_field = registration(moving_img, fixed_img, lamda)
     target_dice, target_jac = compute_metric(moving_label, fixed_label, deformation_field, grid)
- 
+    
+    #image start
+    # hyperpredict_df.loc[i, "target_dice"] = target_dice.mean().item()
+    # hyperpredict_df.loc[i, "target_jac"] = target_jac.item()
+    # df = pd.DataFrame(columns=["pair_idx", "moving_index", "fixed_index",  "predicted_dice", "lamda", "predicted_jac", "target_dice", "target_jac"])
+    # df.loc[i] = hyperpredict_df.loc[i]
+    # df.to_csv("../results/symnet_clapirn/final_result/sensitivity_analysis/xavier_2.0_seeded_target.csv", mode='a', header=False, index=False)
+    # print(i)
+    #image stop
 
-    hyperpredict_df.loc[i, "target_dice"] = target_dice.mean().item()
+    #label start
+    target_dice = target_dice[0]
+    for l in labels.keys():
+        if l == label:
+            target_label = l
+            target_avg = (target_dice[labels[l][0]-1] + target_dice[labels[l][1]-1])/2
+
+
+    hyperpredict_df.loc[i, "target_dice"] = target_avg.item()
     hyperpredict_df.loc[i, "target_jac"] = target_jac.item()
+    hyperpredict_df.loc[i, "target_label"] = target_label
+    df = pd.DataFrame(columns=["pair_idx", "moving_index", "fixed_index",  "predicted_dice", "lamda", "label", "predicted_jac", "target_dice", "target_jac", "target_label"])
+    df.loc[i] = hyperpredict_df.loc[i]
+    df.to_csv("../results/symnet_clapirn/final_result/final_label_1.0_alpha_target.csv", mode='a', header=False, index=False)
     print(i)
-hyperpredict_df.to_csv("../results/symnet_clapirn/sensitivity_analysis/sensitivity_analysis_image_0.5_target.csv")
+    #label stop
 
+ 

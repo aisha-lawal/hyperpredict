@@ -43,29 +43,19 @@ in_features = select_in_features[encoder_model + "_" + registration_model]
 out_features = 36
 mapping_features = 16 if encoder_model == "clapirn" else 32
 model = HyperPredictLightningModule(hyper_predict(in_features, mapping_features, out_features),  registration_model, encoder_model, imgshape, encoder, batch_size, args.encoding_type)
-# model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/total_val_loss=0.00691-epoch=17-logger-mean_encoding_2HLnfv_nfv_194404_no_loss_weight.ckpt")["state_dict"])
-# model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/total_val_loss=0.01015-epoch=43-logger-mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25.ckpt")["state_dict"])
-# model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/total_val_loss=0.01249-epoch=26-logger-training_mean_encoding_main_hyperpredict_network_datasize0.25_le_be_shufld_dataset_weight_2.0.ckpt")["state_dict"])
-model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/total_val_loss=0.01139-epoch=29-logger-mean_encoding_main_hyperpredict_network_datasize0.25_linear_elastisity.ckpt")["state_dict"])
+# model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/default_2HLnfv_nfv_194404_no_loss_weight.ckpt")["state_dict"])
+model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/learning_linear_elasticity.ckpt")["state_dict"])
+# model.load_state_dict(torch.load("models/checkpoints/symnet_niftyreg/learning_bending_energy.ckpt")["state_dict"])
 
-# be = np.linspace(-11, 0, 100)
+# be = np.linspace(-10, 0, 200)
 # be = np.exp(be)
-# le = np.linspace(-11, 0, 100)
-# le = np.exp(le)
+le = np.linspace(-10, 0, 200)
+le = np.exp(le)
 
 # be = [0.0200, 0.0164, 0.0194, 0.0067, 0.0215]
 # le = [0.0085, 0.0067, 0.0080, 0.0091, 0.0102, 0.0076]
 
-# be = [0.05, 0.075, 0.1, 0.125, 0.15, 0.2, 0.5, 1.0]
-
-#important
-# be = [0.0001, 0.006, 0.02, 0.01, 0.2]
-# le = [0.008, 0.006, 0.05, 0.01, 0.1, 0.5]
-
 be = [0.001]
-le = [0.0001, 0.001, 0.0075,0.05, 0.1, 0.2, 0.5, 1]
-
-
 sx = 5
 for params in model.parameters():
     params.requires_grad = False
@@ -74,14 +64,18 @@ for params in model.parameters():
 model.eval()
 model.to(device)
 # dice per image per be
-columns = ["pair_idx", "moving_index", "fixed_index", "predicted_dice", "be", "le", "sx", "predicted_jac"]
+# columns = ["pair_idx", "moving_index", "fixed_index", "predicted_dice", "be", "le", "sx", "predicted_jac"]
 
-dice_average_per_image_per_be = pd.DataFrame(columns = columns)
+# colums_no_optim_image = ["pair_idx", "moving_index", "fixed_index", "predicted_dice", "be", "le", "sx", "predicted_jac"]
 
-#dataframe for dice per label 
-columns_label = ["pair_idx","moving_index", "fixed_index", "predicted_dice","be", "le", "sx", "label", "predicted_jac"]
+# dice_average_per_image_per_be = pd.DataFrame(columns = columns)
 
-dice_average_per_label_per_be = pd.DataFrame(columns = columns_label)
+# #dataframe for dice per label 
+# columns_label = ["pair_idx","moving_index", "fixed_index", "predicted_dice","be", "le", "sx", "label", "predicted_jac"]
+
+# columns_no_optim_label = ["pair_idx","moving_index", "fixed_index", "predicted_dice","be", "le", "sx", "label", "predicted_jac"]
+
+# dice_average_per_label_per_be = pd.DataFrame(columns = columns_label)
 count  = 1
 print("len test generator", len(testing_sub))
 start = datetime.now()
@@ -93,26 +87,24 @@ with torch.no_grad():
         tar = []    
         data[0:4] = [d.to(device) for d in data[0:4]]
         # per_image, per_label = model.test_niftyreg(pair_idx, data, be,le, sx, args.nfv_percent)
-        per_image, per_label = model.test_niftyreg(pair_idx, data, be, le, sx, args.nfv_percent)
-  
+        per_image, per_label, no_optim_image, no_optim_label = model.test_niftyreg(pair_idx, data, be, le, sx, args.nfv_percent)
+
         
         # per_image.to_csv("results/symnet_niftyreg/mean_encoding_2HLnfv_nfv_194404_no_loss_weight_image.csv", mode='a', header=False, index=False)
         # per_label.to_csv("results/symnet_niftyreg/mean_encoding_2HLnfv_nfv_194404_no_loss_weight_label.csv", mode='a', header=False, index=False)
-        per_image.to_csv("results/symnet_niftyreg/sampled_lamda/sampled_lamda_values_images_le.csv", mode='a', header=True if count == 1 else False, index=False)
-        per_label.to_csv("results/symnet_niftyreg/sampled_lamda/sampled_lamda_values_labels_le.csv", mode='a', header=True if count == 1 else False, index=False)
-        
-        
+       
+        per_image.to_csv("results/symnet_niftyreg/final_result/final_image_0.025_alpha_le.csv", mode='a', header=True if count == 1 else False, index=False)
+        per_label.to_csv("results/symnet_niftyreg/final_result/final_label_0.025_alpha_le.csv", mode='a', header=True if count == 1 else False, index=False)
+        no_optim_image.to_csv("results/symnet_niftyreg/final_result/final_no_optim_image_0.025_alpha_le.csv", mode='a', header=True if count == 1 else False, index=False)
+        no_optim_label.to_csv("results/symnet_niftyreg/final_result/final_no_optim_label_0.025_alpha_le.csv", mode='a', header=True if count == 1 else False, index=False)
+
+
+        # per_image.to_csv("results/symnet_niftyreg/final_result/image_0.005.csv", mode='a', header=True if count == 1 else False, index=False)
+        # per_label.to_csv("results/symnet_niftyreg/final_result/label_0.005.csv", mode='a', header=True if count == 1 else False, index=False)
+       
         print(count)
         count += 1
 
-#do below to save optimal target valuestest
-# image_data = pd.read_csv("results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25_img.csv")
-# image_data = image_data.groupby(["pair_idx"], as_index=False).apply(lambda x: x[x.predicted_dice == x.predicted_dice.max()])
-# image_data.to_csv("results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25_img.csv")
-
-# label_data = pd.read_csv("results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25_label.csv")
-# label_data = label_data.groupby(["pair_idx", "label"], as_index=False).apply(lambda x: x[x.predicted_dice == x.predicted_dice.max()])
-# label_data.to_csv("results/symnet_niftyreg/mean_encoding_main_hyperpredict_network_nfv_194404_be_le_sx_datasize0.25_label.csv")
 print("time taken", datetime.now() - start)
         
 
